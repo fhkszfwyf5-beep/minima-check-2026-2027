@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Minima Check 2026 → 2027</title>
+<style>
+:root{--blue:#155eef;--green:#159957;--ink:#17212b;--muted:#66727d;--bg:#f4f7f9;--card:#fff;--line:#dfe5ea}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+.app{max-width:560px;margin:auto;min-height:100vh}.hero{background:linear-gradient(135deg,#123c73,#159957);color:#fff;padding:42px 24px 30px;border-radius:0 0 34px 34px}
+h1{font-size:34px;line-height:1.08;margin:0 0 12px}.subtitle{font-size:19px;line-height:1.4;margin:0}.privacy{font-size:14px;line-height:1.45;margin-top:18px;opacity:.95}
+main{padding:20px 16px 34px}.card{background:var(--card);border-radius:22px;padding:22px;margin-bottom:16px;box-shadow:0 4px 18px #17212b12}
+.progress{height:8px;background:#dfe8ef;border-radius:99px;margin-bottom:18px;overflow:hidden}.bar{height:100%;background:var(--blue);width:8%;transition:.25s}
+.step{font-size:13px;color:var(--muted);margin-bottom:8px}.emoji{font-size:34px}.question{font-size:25px;font-weight:750;margin:8px 0 8px}.help{color:var(--muted);line-height:1.5;margin-bottom:18px}
+label.option{display:flex;align-items:center;gap:12px;border:2px solid var(--line);border-radius:15px;padding:14px;margin:10px 0;font-size:17px;background:#fff}
+input[type=checkbox],input[type=radio]{width:21px;height:21px;accent-color:var(--blue)}input.text{width:100%;padding:15px;border:2px solid var(--line);border-radius:14px;font-size:19px;text-transform:uppercase}
+button{border:0;border-radius:15px;padding:15px 18px;font-size:17px;font-weight:750;cursor:pointer}.primary{background:var(--blue);color:#fff;width:100%}.secondary{background:#e9eef3;color:var(--ink);width:100%;margin-top:10px}.back{background:transparent;color:var(--muted);padding:8px 0;margin-bottom:8px}.success{background:#e8f7ed;border:1px solid #bfe5ca;padding:15px;border-radius:14px}.notice{background:#fff7df;border:1px solid #f0d78b;padding:15px;border-radius:14px;line-height:1.45}.result{border-left:6px solid var(--green);padding:15px;background:#f3fbf6;border-radius:14px;margin:12px 0}.result h3{margin:0 0 5px}.small{font-size:13px;color:var(--muted);line-height:1.45}.hidden{display:none}.footer{text-align:center;color:var(--muted);font-size:13px;padding:10px 12px 30px}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+<h1>💙 MINIMA CHECK<br>2026 → 2027</h1>
+<p class="subtitle">Ontdek welke regelingen je kunt controleren.</p>
+<p class="privacy">Gratis • eenvoudig • privacyvriendelijk<br>Geen naam, BSN, DigiD, huisnummer of bankgegevens nodig.</p>
+</header>
+<main>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="content"></div>
+<div class="footer">Deze check geeft alleen een eerste indicatie. De officiële instantie of gemeente beoordeelt uiteindelijk of je recht hebt en onder welke voorwaarden.</div>
+</main>
+</div>
+<script>
+const answers={}; let step=0;
+const steps=[
+ {key:"start",title:"Welkom",emoji:"👋",body:`<p class="help">Met een paar korte vragen krijg je een overzicht van regelingen die je kunt controleren. Je hoeft geen persoonlijke documenten te uploaden.</p><div class="success"><b>Zo werken we:</b><br>1. Jouw situatie<br>2. Inkomen & wonen<br>3. Zorg & gezin<br>4. Jouw persoonlijke actielijst</div>`},
+ {key:"municipality",title:"Waar woon je?",emoji:"📍",body:`<p class="help">Vul alleen je postcode in. We gebruiken deze om je gemeente te bepalen. <b>Geen huisnummer nodig.</b></p><input class="text" id="postcode" maxlength="7" placeholder="bijv. 2711 AB"><div id="gemeenteBox" style="margin-top:12px"></div>`},
+ {key:"about",title:"Over jou",emoji:"👤",body:`<p class="help">Welke situatie past bij jou?</p>${opts("situation",["Alleenstaand","Met partner","Alleenstaand met kind(eren)","Met partner en kind(eren)","Anders / wil ik niet zeggen"])}`},
+ {key:"income",title:"Jouw inkomen",emoji:"💶",body:`<p class="help">Hoe is je inkomen ongeveer?</p>${opts("income",["Geen of zeer laag inkomen","Laag inkomen","Middeninkomen","Hoger inkomen","Wil ik niet zeggen"])}`},
+ {key:"work",title:"Werk & uitkering",emoji:"💼",body:`<p class="help">Wat past het beste bij je?</p>${opts("work",["Ik werk","Ik ben werkzoekend","Ik ontvang bijstand","Ik ontvang een andere uitkering","Ik ben zelfstandige","Wil ik niet zeggen"])}`},
+ {key:"housing",title:"Wonen",emoji:"🏡",body:`<p class="help">Hoe woon je?</p>${opts("housing",["Ik huur een woning","Ik heb een koopwoning","Ik woon bij iemand / anders","Wil ik niet zeggen"])}`},
+ {key:"care",title:"Zorg",emoji:"❤️",body:`<p class="help">Welke situatie speelt bij jou?</p>${opts("care",["Ik betaal zorgverzekering en zorgkosten","Ik heb extra zorgkosten","Ik heb weinig zorgkosten","Wil ik niet zeggen"])}`},
+ {key:"children",title:"Kinderen & gezin",emoji:"👨‍👩‍👧‍👦",body:`<p class="help">Zijn er kinderen waarvoor je financieel zorgt?</p>${opts("children",["Ja, jonger dan 18","Ja, 18 jaar of ouder","Nee","Wil ik niet zeggen"])}`},
+ {key:"extra",title:"Extra kosten",emoji:"💳",body:`<p class="help">Heb je moeite om rond te komen of bijzondere kosten?</p>${opts("extra",["Ja, ik kom moeilijk rond","Ja, ik heb bijzondere kosten","Ja, ik heb schulden of betalingsproblemen","Nee","Wil ik niet zeggen"])}`},
+ {key:"result",title:"Jouw resultaat",emoji:"🎯",body:""},
+ {key:"actions",title:"Mijn actielijst",emoji:"📋",body:""}
+];
+function opts(name,list){return list.map((x,i)=>`<label class="option"><input type="radio" name="${name}" value="${x.replaceAll('"','')}"> <span>${x}</span></label>`).join("")}
+function render(){
+ const s=steps[step]; document.getElementById("bar").style.width=((step+1)/steps.length*100)+"%";
+ let body=s.body;
+ if(s.key==="result") body=makeResult();
+ if(s.key==="actions") body=makeActions();
+ document.getElementById("content").innerHTML=`<div class="card">${step>0?'<button class="back" onclick="prev()">← Terug</button>':''}<div class="step">Stap ${step+1} van ${steps.length}</div><div class="emoji">${s.emoji}</div><div class="question">${s.title}</div>${body}${step<steps.length-1?`<button class="primary" onclick="next()">Verder →</button>`:''}${step===steps.length-1?`<button class="secondary" onclick="restart()">Opnieuw beginnen</button>`:''}</div>`;
+ if(s.key==="municipality") document.getElementById("postcode").addEventListener("input", lookupMunicipality);
+ restore();
+}
+function restore(){
+ const s=steps[step]; if(!s.key)return;
+ const v=answers[s.key]; if(v){
+  const el=document.querySelector(`[name="${s.key}"][value="${CSS.escape(v)}"]`); if(el)el.checked=true;
+ }
+}
+function saveCurrent(){
+ const s=steps[step];
+ if(s.key==="municipality"){const p=document.getElementById("postcode"); if(p)answers.postcode=p.value}
+ else {const el=document.querySelector(`[name="${s.key}"]:checked`); if(el)answers[s.key]=el.value}
+}
+function next(){saveCurrent(); if(step===1&&!answers.municipalityName){lookupMunicipality(true); if(!answers.municipalityName){return alert("Vul je postcode in of kies later zelf je gemeente.");}} if(step<steps.length-1)step++;render();window.scrollTo(0,0)}
+function prev(){saveCurrent();if(step>0)step--;render();window.scrollTo(0,0)}
+function restart(){location.reload()}
+async function lookupMunicipality(force=false){
+ const p=(document.getElementById("postcode")?.value||"").replace(/\s/g,"").toUpperCase();
+ answers.postcode=p;
+ const box=document.getElementById("gemeenteBox"); if(!box)return;
+ if(p.length<6){box.innerHTML=""; if(force)answers.municipalityName=""; return}
+ box.innerHTML='<div class="small">Gemeente wordt opgezocht…</div>';
+ try{
+  const url="https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q="+encodeURIComponent(p)+"&rows=10";
+  const r=await fetch(url); const j=await r.json();
+  const docs=(j.response?.docs||[]);
+  const names=[...new Set(docs.map(d=>d.gemeentenaam||d.gemeente_naam).filter(Boolean))];
+  if(names.length){
+    answers.municipalityName=names[0];
+    box.innerHTML=`<div class="success"><b>Gemeente gevonden</b><br>${names[0]}<br><span class="small">Klopt dit? Je kunt de gemeente later altijd handmatig aanpassen.</span></div>`;
+  }else{answers.municipalityName="";box.innerHTML='<div class="notice">We konden de gemeente niet automatisch bepalen. Kies je gemeente handmatig in een volgende versie.</div>'}
+ }catch(e){answers.municipalityName="";box.innerHTML='<div class="notice">Automatisch opzoeken lukt nu niet. Je kunt deze check wel verder gebruiken.</div>'}
+}
+function makeResult(){
+ const r=[];
+ r.push(["Als eerste controleren","Zorgtoeslag, huurtoeslag en kindgebonden budget","Landelijke toeslagen hangen af van onder meer inkomen, vermogen, leeftijd en gezinssituatie."]);
+ if(["Ik huur een woning"].includes(answers.housing)) r.push(["Als eerste controleren","Huurtoeslag","Controleer of je voldoet aan de voorwaarden voor huurtoeslag."]);
+ if(answers.children==="Ja, jonger dan 18") r.push(["Als eerste controleren","Kindgebonden budget","Controleer de voorwaarden en het bedrag voor jouw gezin."]);
+ if(answers.extra&&answers.extra!=="Nee"&&answers.extra!=="Wil ik niet zeggen") r.push(["Mogelijk interessant om te controleren","Bijzondere bijstand","Je gemeente kan soms helpen bij noodzakelijke bijzondere kosten."]);
+ if(answers.work==="Ik ontvang bijstand"||answers.income==="Geen of zeer laag inkomen") r.push(["Mogelijk interessant om te controleren","Individuele inkomenstoeslag","Gemeenten kunnen onder voorwaarden een jaarlijkse toeslag geven bij langdurig laag inkomen."]);
+ if(answers.extra==="Ja, ik heb schulden of betalingsproblemen") r.push(["Als eerste controleren","Hulp bij geldzorgen en schulden","Neem contact op met je gemeente of een officiële schuldhulpverlener."]);
+ if(answers.municipalityName) r.push(["Gemeente controleren",`Regelingen van ${answers.municipalityName}`,"Bekijk de gemeentelijke regelingen voor minima, kwijtschelding en meedoen."]);
+ return `<div class="notice">Dit zijn <b>regelingen die je kunt controleren</b>, geen garantie op recht.</div>${r.map(x=>`<div class="result"><h3>${x[0]}</h3><b>${x[1]}</b><br><span class="small">${x[2]}</span></div>`).join("")}<p class="small">2027-regels kunnen nog wijzigen. Na Prinsjesdag 2026 worden definitieve wijzigingen verwerkt zodra deze officieel zijn vastgesteld.</p>`;
+}
+function makeActions(){
+ return `<p class="help">Je persoonlijke actielijst:</p>
+ <label class="option"><input type="checkbox"> Controleer landelijke toeslagen bij Dienst Toeslagen</label>
+ <label class="option"><input type="checkbox"> Controleer regelingen en kwijtschelding bij mijn gemeente</label>
+ <label class="option"><input type="checkbox"> Verzamel alleen de documenten die de officiële instantie vraagt</label>
+ <label class="option"><input type="checkbox"> Vraag hulp als aanvragen lastig is</label>
+ <div class="notice" style="margin-top:14px"><b>Privacy:</b> deel in deze check nooit je BSN, DigiD-wachtwoord, pincode of bankgegevens.</div>`;
+}
+render();
+</script>
+</body>
+</html>
